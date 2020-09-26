@@ -9,13 +9,30 @@ interface IRequest {
   name: string;
   email: string;
 }
-
+// injeção de dependencias
 @injectable()
 class CreateCustomerService {
-  constructor(private customersRepository: ICustomersRepository) {}
+  constructor(
+    @inject('CustomersRepository')
+    private customersRepository: ICustomersRepository,
+  ) {}
 
   public async execute({ name, email }: IRequest): Promise<Customer> {
-    // TODO
+    // verifico se o email existe na base de dados
+    const checkCustomers = await this.customersRepository.findByEmail(email);
+    // se existir retorno msg
+    if (checkCustomers) {
+      throw new AppError('This e-mail is already registered');
+    }
+
+    // crio e salvo o cliente usando o repositorio
+    const customer = await this.customersRepository.create({
+      name,
+      email,
+    });
+
+    // retorno o repositorio para o controller
+    return customer;
   }
 }
 
